@@ -2,12 +2,17 @@ use std::collections::HashMap;
 use std::process::Stdio;
 use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::process::ChildStdin;
+use tokio::process::{Child, ChildStdin};
 use tokio::sync::Mutex;
+
+pub struct TerminalSession {
+    pub stdin: ChildStdin,
+    pub child: Child,
+}
 
 /// Managed state: maps shell process ID → its stdin handle.
 pub struct TerminalState {
-    pub sessions: Mutex<HashMap<u32, ChildStdin>>,
+    pub sessions: Mutex<HashMap<u32, TerminalSession>>,
 }
 
 impl TerminalState {
@@ -79,7 +84,7 @@ pub async fn terminal_create(
         .sessions
         .lock()
         .await
-        .insert(pid, stdin);
+        .insert(pid, TerminalSession { stdin, child });
 
     // Background task: stream stdout → frontend events.
     let app_out = app.clone();
@@ -115,11 +120,6 @@ pub async fn terminal_create(
         }
     });
 
-    // Reap the child process when it exits so it doesn't become a zombie.
-    tokio::spawn(async move {
-        let _ = child.wait().await;
-    });
-
     Ok(pid)
 }
 
@@ -128,23 +128,32 @@ pub async fn terminal_create(
 pub async fn terminal_write(app: AppHandle, pid: u32, data: String) -> Result<(), String> {
     let state = app.state::<TerminalState>();
     let mut sessions = state.sessions.lock().await;
-    if let Some(stdin) = sessions.get_mut(&pid) {
-        stdin
+    if let Some(session) = sessions.get_mut(&pid) {
+        session
+            .stdin
             .write_all(data.as_bytes())
             .await
             .map_err(|e| e.to_string())?;
-        stdin.flush().await.map_err(|e| e.to_string())?;
+        session.stdin.flush().await.map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
-/// Close the stdin handle (signals EOF to the shell) and remove the session.
+/// Kill the shell process and remove the session.
 #[tauri::command]
 pub async fn terminal_kill(app: AppHandle, pid: u32) -> Result<(), String> {
-    app.state::<TerminalState>()
+    let session = app
+        .state::<TerminalState>()
         .sessions
         .lock()
         .await
         .remove(&pid);
+
+    if let Some(mut s) = session {
+        // Best-effort termination; process may already have exited.
+        let _ = s.child.kill().await;
+        let _ = s.child.wait().await;
+    }
+
     Ok(())
 }

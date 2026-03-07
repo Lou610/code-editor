@@ -17,9 +17,11 @@ import {
   Breadcrumb,
   FileReloadToast,
 } from "./components";
+import { tryCloseTab } from "./components/TabBar";
 import { useEditorStore } from "./store/editorStore";
 import { useSettingsStore } from "./store/settingsStore";
 import { saveFile } from "./tauri/files";
+import { checkForUpdates } from "./tauri/updater";
 import "./App.css";
 
 function useTheme() {
@@ -44,6 +46,13 @@ function useGitBranch() {
       if (state.workspaceRoot !== prev.workspaceRoot) refresh();
     });
     return () => { clearInterval(interval); unsub(); };
+  }, []);
+}
+
+function useAutoUpdateCheck() {
+  useEffect(() => {
+    // Silent startup check; interactive checks can be wired to a menu action later.
+    checkForUpdates({ interactive: false }).catch(() => {});
   }, []);
 }
 
@@ -72,9 +81,7 @@ function useKeyboardShortcuts() {
         const { tabs, activeTabId, closeTab } = useEditorStore.getState();
         const tab = tabs.find((t) => t.id === activeTabId);
         if (!tab) return;
-        import("./components/TabBar").then(({ tryCloseTab }) =>
-          tryCloseTab(tab, closeTab),
-        );
+        tryCloseTab(tab, closeTab);
       }
       if (e.ctrlKey && !e.shiftKey && e.key === "Tab") {
         e.preventDefault();
@@ -158,6 +165,7 @@ function useCloseGuard() {
 export default function App() {
   useTheme();
   useGitBranch();
+  useAutoUpdateCheck();
   useKeyboardShortcuts();
   useCloseGuard();
 

@@ -45,6 +45,35 @@ export function FileReloadToast() {
     mtimeCache.current.delete(path);
     const result = await openFileByPath(path);
     if (!result) return;
+
+    const normalized = path.replace(/\\/g, "/");
+    const store = useEditorStore.getState();
+    const existing = store.tabs.find(
+      (t: TabState) => t.path?.replace(/\\/g, "/") === normalized,
+    );
+
+    if (existing) {
+      // Replace content in the existing tab so reload is immediate and deterministic.
+      useEditorStore.setState((s: { tabs: TabState[]; activeTabId: string | null }) => ({
+        tabs: s.tabs.map((t: TabState) =>
+          t.id === existing.id
+            ? {
+                ...t,
+                path: result.path,
+                label: result.label,
+                content: result.content,
+                language: result.language,
+                encoding: result.encoding,
+                lineEnding: result.lineEnding,
+                dirty: false,
+              }
+            : t,
+        ),
+        activeTabId: existing.id,
+      }));
+      return;
+    }
+
     useEditorStore.getState().addTabOrFocus({ ...result, dirty: false });
   };
 
