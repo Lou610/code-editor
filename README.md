@@ -1,83 +1,136 @@
-# Code Editor
+# GroveNotes
 
-A cross-platform code editor built with **Tauri v2** (Rust backend) and **React + TypeScript** (Vite) with **Tailwind CSS**. Lightweight alternative to Notepad++ with support for many programming languages.
+[![Release](https://github.com/Lou610/code-editor/actions/workflows/release.yml/badge.svg)](https://github.com/Lou610/code-editor/actions/workflows/release.yml)
+[![CI](https://github.com/Lou610/code-editor/actions/workflows/ci.yml/badge.svg)](https://github.com/Lou610/code-editor/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/Lou610/code-editor?display_name=tag)](https://github.com/Lou610/code-editor/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+GroveNotes is a desktop code editor built with Tauri v2 (Rust backend) and React + TypeScript (Vite frontend). It is designed to feel fast, lightweight, and native while still supporting modern editing workflows.
+
+## Screenshots
+
+Add screenshots to `public/assets/images/` and link them below.
+
+Example layout:
+
+```md
+![Editor](public/assets/images/editor-main.png)
+![Terminal](public/assets/images/terminal-panel.png)
+![Settings](public/assets/images/settings-themes.png)
+```
+
+## Highlights
+
+- CodeMirror 6 editor with broad language support (JS/TS, Python, Rust, C/C++, Java, Go, PHP, HTML, CSS, JSON, YAML, Markdown, SQL, Bash, XML, and more)
+- Multi-tab editing with dirty-state tracking
+- File explorer, recent files, and workspace support
+- Find/replace, project search, and go-to-line
+- Integrated terminal panel (xterm.js)
+- Git branch and file diff indicators
+- Built-in auto-updater via GitHub Releases (`latest.json`)
+- Multiple UI themes: `dark`, `light`, `ocean`, `forest`, `sunset`
+
+## Tech Stack
+
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand, CodeMirror, xterm.js
+- Backend: Rust, Tauri v2, Tokio
+- CI/CD: GitHub Actions + `tauri-apps/tauri-action`
 
 ## Prerequisites
 
-- **Node.js** 18+ and npm
-- **Rust** (install from [rustup](https://rustup.rs/) or `winget install Rustlang.Rustup`)
-- **Windows**: **Visual Studio Build Tools** with the **Desktop development with C++** workload (required for Rust). If you see `linker 'link.exe' not found`, install from [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select "Desktop development with C++".
+- Node.js 20+ and npm
+- Rust toolchain (recommended: `rustup`)
+- Windows build tools for Rust:
+	- Visual Studio Build Tools
+	- "Desktop development with C++" workload
+
+If you hit `linker 'link.exe' not found`, install/update Visual Studio Build Tools and ensure the C++ workload is selected.
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Development (hot reload)
 npm run tauri dev
 ```
 
-If you see `program not found` for cargo (e.g. terminal was opened before installing Rust), either **reopen the terminal** or run from the project root:
+If `cargo` is not found in your terminal session (common right after a fresh Rust install), reopen your terminal or run:
 
 ```powershell
 .\scripts\dev.ps1
 ```
 
-That script adds `%USERPROFILE%\.cargo\bin` to PATH for the session, then runs `tauri dev`.
+That script temporarily appends `%USERPROFILE%\.cargo\bin` to `PATH` and starts `tauri dev`.
 
-```
-
-## Build for production
+## Build
 
 ```bash
 npm run build
 npm run tauri build
 ```
 
-Outputs are in `src-tauri/target/release/` (or `debug/` for dev).
+Build output is generated under `src-tauri/target/release/`.
 
-## Scripts
+## NPM Scripts
 
 | Command | Description |
-|--------|-------------|
-| `npm run dev` | Frontend only (Vite) |
-| `npm run build` | Build frontend (TypeScript + Vite) |
-| `npm run tauri dev` | Run app in development |
-| `npm run tauri build` | Build production binary |
+| --- | --- |
+| `npm run dev` | Frontend dev server only (Vite) |
+| `npm run build` | Type-check and build frontend |
+| `npm run preview` | Preview built frontend |
+| `npm run tauri dev` | Run the desktop app in development |
+| `npm run tauri build` | Build desktop app bundles |
 
-## Features
+## Auto Update Flow
 
-- **Editor**: CodeMirror 6 with syntax highlighting for JavaScript, TypeScript, Python, Rust, C/C++, Java, Go, PHP, HTML, CSS, JSON, YAML, Markdown, SQL, Bash, and more
-- **UI**: Dark theme (VS Code–style), menu bar, resizable sidebar, tabbed editor, status bar
-- **Files**: Open, Save, Save As via Tauri commands and system dialogs
-- **Shortcuts**: Ctrl+S Save, Ctrl+W Close tab, Ctrl+Tab Cycle tabs, Ctrl+` Terminal, Ctrl+H Find & Replace
-- **Find & Replace**: Panel with regex, case-sensitive, whole-word options
-- **Terminal**: xterm.js panel (toggle with Ctrl+`)
+GroveNotes is configured to check for updates on startup using Tauri Updater.
 
-## Project Structure
+- Update endpoint: `https://github.com/Lou610/code-editor/releases/latest/download/latest.json`
+- Signed artifacts are generated during release builds
+- On update found: user is prompted to install, then app relaunches
 
-```
+To publish an update:
+
+1. Bump app versions (`package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`)
+2. Push to `main`
+3. Create and push a release tag (for example `V0.0.4`)
+4. GitHub Actions release workflow builds and publishes installers + updater metadata
+
+## Release Workflow
+
+Tag pushes (`v*` or `V*`) trigger `.github/workflows/release.yml`, which:
+
+- installs Node and Rust toolchains
+- runs Tauri release build on Windows
+- uploads release assets
+- uploads updater metadata/signatures (`latest.json` + `.sig`)
+
+Required GitHub secrets:
+
+- `TAURI_SIGNING_PRIVATE_KEY`
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+
+## Project Layout
+
+```text
 code-editor/
-├── src/                 # Frontend (React + Vite)
-│   ├── components/      # MenuBar, Sidebar, TabBar, EditorPane, StatusBar, etc.
-│   ├── store/           # Zustand editor state
-│   ├── tauri/           # Tauri API wrappers (files, dialogs)
-│   ├── types/           # Shared TypeScript types
-│   └── utils/           # Helpers (e.g. language detection)
-├── src-tauri/           # Rust backend
-│   ├── src/
-│   │   ├── commands/    # read_file, write_file, path_exists
-│   │   └── lib.rs       # Tauri app entry and plugin registration
-│   └── capabilities/    # Permissions (fs, dialog, etc.)
-└── package.json / Cargo.toml
+|- src/                  # React frontend
+|  |- components/        # UI components (editor, terminal, sidebar, settings)
+|  |- store/             # Zustand stores
+|  |- tauri/             # Frontend wrappers for Tauri APIs
+|  |- types/             # Shared TS types
+|  `- utils/             # Utility helpers
+|- src-tauri/            # Rust backend (Tauri)
+|  |- src/commands/      # Tauri command handlers (files, search, terminal, git)
+|  |- capabilities/      # Permission manifests
+|  `- tauri.conf.json    # Tauri app and updater configuration
+`- .github/workflows/    # CI and release pipelines
 ```
 
-## Code Quality
+## Development Notes
 
-- **ESLint** + **Prettier** for frontend
-- **Rust fmt** (`rustfmt.toml`) for backend
-- Run `npx eslint src` and `cargo fmt` before committing
+- Format/lint frontend: `npx eslint src`
+- Format backend: `cargo fmt`
+- Validate backend quickly: `cargo check` (run from `src-tauri`)
 
 ## License
 
