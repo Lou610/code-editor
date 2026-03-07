@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useEditorStore } from "../store/editorStore";
+import { useLspStore } from "../store/lspStore";
 import type { LanguageId, LineEnding, TabState } from "../types/editor";
 
 const LANG_LABELS: Record<LanguageId, string> = {
@@ -45,14 +46,50 @@ function countWords(text: string): number {
 
 export function StatusBar() {
   const { tabs, activeTabId, setTabLanguage, cursorLine, cursorCol, gitBranch } = useEditorStore();
+  const {
+    state: lspState,
+    server: lspServer,
+    message: lspMessage,
+    recentLogs,
+    requestRestart,
+    clearLogs,
+    menuOpen: lspMenuOpen,
+    toggleMenu: toggleLspMenu,
+    closeMenu: closeLspMenu,
+  } = useLspStore();
   const activeTab = tabs.find((t: TabState) => t.id === activeTabId);
 
   const [leMenuOpen, setLeMenuOpen] = useState(false);
   const leRef = useRef<HTMLDivElement>(null);
+  const lspRef = useRef<HTMLDivElement>(null);
 
   const totalLines = activeTab ? activeTab.content.split("\n").length : 0;
   const wordCount = activeTab ? countWords(activeTab.content) : 0;
   const charCount = activeTab ? activeTab.content.length : 0;
+
+  const lspLabel =
+    lspState === "ready"
+      ? "LSP: Ready"
+      : lspState === "starting"
+        ? "LSP: Starting"
+        : lspState === "unsupported"
+          ? "LSP: N/A"
+          : lspState === "error"
+            ? "LSP: Error"
+            : "LSP: Off";
+
+  const lspClass =
+    lspState === "ready"
+      ? "text-green-400"
+      : lspState === "starting"
+        ? "text-yellow-400"
+        : lspState === "error"
+          ? "text-red-400"
+          : "text-[var(--text-muted)]";
+
+  const lspTitle = [lspLabel, lspServer || null, lspMessage || null]
+    .filter(Boolean)
+    .join("\n");
 
   const handleLineEndingChange = (le: LineEnding) => {
     setLeMenuOpen(false);
@@ -163,6 +200,70 @@ export function StatusBar() {
       </div>
 
       <div className="flex-1" />
+
+      <div className="relative" ref={lspRef}>
+        <button
+          type="button"
+          className={`px-2 py-0.5 rounded bg-[var(--bg-overlay)] ${lspClass} hover:bg-[var(--bg-hover)] transition-colors`}
+          title={lspTitle}
+          onClick={toggleLspMenu}
+        >
+          {lspLabel}
+        </button>
+        {lspMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={closeLspMenu} />
+            <div
+              className="absolute bottom-full mb-1 right-0 z-50 rounded-lg border border-[var(--border-default)] shadow-lg w-[360px] overflow-hidden"
+              style={{ background: "var(--bg-overlay)" }}
+            >
+              <div className="px-3 py-2 border-b border-[var(--border-subtle)]">
+                <p className="text-xs font-semibold text-[var(--text-primary)]">Language Server</p>
+                <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{lspServer || "No server"}</p>
+                {lspMessage && (
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1">{lspMessage}</p>
+                )}
+              </div>
+
+              <div className="p-2 border-b border-[var(--border-subtle)] flex items-center gap-2">
+                <button
+                  type="button"
+                  className="px-2 py-1 text-[11px] rounded border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  onClick={() => {
+                    requestRestart();
+                    closeLspMenu();
+                  }}
+                >
+                  Restart LSP
+                </button>
+                <button
+                  type="button"
+                  className="px-2 py-1 text-[11px] rounded border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  onClick={() => clearLogs()}
+                >
+                  Clear Logs
+                </button>
+              </div>
+
+              <div className="max-h-40 overflow-y-auto p-2 space-y-1">
+                {recentLogs.length === 0 && (
+                  <p className="text-[11px] text-[var(--text-muted)] px-1 py-0.5">
+                    No recent LSP logs.
+                  </p>
+                )}
+                {recentLogs.map((line, idx) => (
+                  <pre
+                    key={`${idx}-${line.slice(0, 24)}`}
+                    className="text-[11px] leading-4 whitespace-pre-wrap break-words font-mono px-1 py-0.5 text-[var(--text-secondary)]"
+                  >
+                    {line}
+                  </pre>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       <span className="text-[var(--text-muted)]">Ready</span>
     </footer>

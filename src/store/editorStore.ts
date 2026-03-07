@@ -63,7 +63,7 @@ interface EditorState {
   toggleFindReplace: () => void;
   addRecentFile: (path: string) => void;
   setRecentFiles: (paths: string[]) => void;
-  /** True when the active tab has a CodeMirror view (for Edit menu enable/disable). */
+  /** True when the active tab has a mounted editor view (for Edit menu enable/disable). */
   editorReady: boolean;
   setEditorReady: (ready: boolean) => void;
   /** Cursor position tracked by EditorPane. */

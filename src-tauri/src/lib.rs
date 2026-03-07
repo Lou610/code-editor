@@ -2,8 +2,8 @@ mod commands;
 
 use commands::{
     create_dir, create_file, delete_entry, get_file_mtime, git_branch, git_file_diff, path_exists,
-    read_dir, read_file, rename_entry, search_in_files, terminal_create, terminal_kill,
-    terminal_write, write_file, TerminalState,
+    lsp_send, lsp_start, lsp_stop, read_dir, read_file, rename_entry, search_in_files,
+    terminal_create, terminal_kill, terminal_write, write_file, LspState, TerminalState,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -15,6 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(TerminalState::new())
+        .manage(LspState::new())
         .invoke_handler(tauri::generate_handler![
             read_file,
             write_file,
@@ -31,6 +32,9 @@ pub fn run() {
             terminal_create,
             terminal_write,
             terminal_kill,
+            lsp_start,
+            lsp_send,
+            lsp_stop,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
