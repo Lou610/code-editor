@@ -2,6 +2,19 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::UNIX_EPOCH;
 
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+fn git_command() -> tokio::process::Command {
+    let mut cmd = tokio::process::Command::new("git");
+    #[cfg(windows)]
+    {
+        // Prevent a transient console window when running git subprocesses.
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    cmd
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileContent {
     pub path: String,
@@ -191,7 +204,7 @@ fn search_dir<'a>(
 /// Return the current git branch for the given directory, or empty string if not a git repo.
 #[tauri::command]
 pub async fn git_branch(root: String) -> String {
-    let output = tokio::process::Command::new("git")
+    let output = git_command()
         .args(["-C", &root, "rev-parse", "--abbrev-ref", "HEAD"])
         .output()
         .await;
@@ -224,7 +237,7 @@ pub async fn git_file_diff(path: String) -> Vec<DiffHunk> {
     };
 
     // `git diff HEAD -- <file>` for committed files; fall back to `git diff --cached` for staged
-    let raw = tokio::process::Command::new("git")
+    let raw = git_command()
         .args(["-C", &dir, "diff", "HEAD", "--unified=0", "--", &path])
         .output()
         .await;
@@ -233,7 +246,7 @@ pub async fn git_file_diff(path: String) -> Vec<DiffHunk> {
         Ok(o) if !o.stdout.is_empty() => String::from_utf8_lossy(&o.stdout).into_owned(),
         _ => {
             // Try comparing against the empty tree (new/untracked file added to index)
-            let raw2 = tokio::process::Command::new("git")
+            let raw2 = git_command()
                 .args(["-C", &dir, "diff", "--cached", "--unified=0", "--", &path])
                 .output()
                 .await;
