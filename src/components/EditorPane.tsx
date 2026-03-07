@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
-import MonacoEditor, { loader, type OnMount } from "@monaco-editor/react";
+import MonacoEditor, { type OnMount } from "@monaco-editor/react";
 import { invoke } from "@tauri-apps/api/core";
-import * as monacoRuntime from "monaco-editor";
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
-import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
-import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 import type * as Monaco from "monaco-editor";
 import { saveFile } from "../tauri/files";
 import { setCurrentEditor } from "../editorRef";
@@ -15,25 +9,6 @@ import { isLightTheme, useSettingsStore } from "../store/settingsStore";
 import type { LanguageId } from "../types/editor";
 import { LspClient, getLspServerConfig } from "../lsp/client";
 import { useLspStore } from "../store/lspStore";
-
-// Use bundled Monaco assets so desktop runtime does not depend on external CDN access.
-loader.config({ monaco: monacoRuntime });
-
-const monacoGlobal = self as typeof self & {
-  MonacoEnvironment?: {
-    getWorker: (_: string, label: string) => Worker;
-  };
-};
-
-monacoGlobal.MonacoEnvironment = {
-  getWorker(_: string, label: string) {
-    if (label === "json") return new jsonWorker();
-    if (label === "css" || label === "scss" || label === "less") return new cssWorker();
-    if (label === "html" || label === "handlebars" || label === "razor") return new htmlWorker();
-    if (label === "typescript" || label === "javascript") return new tsWorker();
-    return new editorWorker();
-  },
-};
 
 interface DiffHunk {
   start: number;

@@ -215,7 +215,7 @@ export function Sidebar() {
     const startX = e.clientX;
     const startW = sidebarWidth;
     const onMove = (e2: MouseEvent) => {
-      const next = Math.max(170, Math.min(300, startW + (e2.clientX - startX)));
+      const next = Math.max(160, Math.min(420, startW + (e2.clientX - startX)));
       setSidebarWidth(next);
     };
     const onUp = () => {
