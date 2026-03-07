@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { editor as MonacoEditorNS } from "monaco-editor";
 import { useEditorStore } from "../store/editorStore";
-import { currentEditor } from "../editorRef";
+import { currentEditorView } from "../editorRef";
+import {
+  SearchQuery,
+  findNext,
+  findPrevious,
+  replaceNext as cmReplaceNext,
+  replaceAll as cmReplaceAll,
+  setSearchQuery,
+} from "@codemirror/search";
 
 function IconSearch() {
   return (
@@ -66,34 +73,6 @@ const inputClass =
   "text-[var(--text-primary)] placeholder-[var(--text-muted)] " +
   "focus:border-[var(--accent)] focus:outline-none transition-colors w-full";
 
-function escapeRegex(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function buildSearchPattern(find: string, useRegex: boolean, wholeWord: boolean): { pattern: string; isRegex: boolean } {
-  if (!find) return { pattern: "", isRegex: false };
-
-  if (useRegex) {
-    if (wholeWord) return { pattern: `\\b(?:${find})\\b`, isRegex: true };
-    return { pattern: find, isRegex: true };
-  }
-
-  if (wholeWord) return { pattern: `\\b${escapeRegex(find)}\\b`, isRegex: true };
-  return { pattern: find, isRegex: false };
-}
-
-function getAllMatches(
-  model: MonacoEditorNS.ITextModel,
-  find: string,
-  useRegex: boolean,
-  caseSensitive: boolean,
-  wholeWord: boolean,
-): MonacoEditorNS.FindMatch[] {
-  const { pattern, isRegex } = buildSearchPattern(find, useRegex, wholeWord);
-  if (!pattern) return [];
-  return model.findMatches(pattern, false, isRegex, caseSensitive, null, false);
-}
-
 export function FindReplace() {
   const { findReplaceOpen, toggleFindReplace } = useEditorStore();
   const [find, setFind] = useState("");
@@ -101,144 +80,91 @@ export function FindReplace() {
   const [regex, setRegex] = useState(false);
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [wholeWord, setWholeWord] = useState(false);
-  const [stats, setStats] = useState({ count: 0, current: 0 });
-  const [regexError, setRegexError] = useState<string | null>(null);
   const findInputRef = useRef<HTMLInputElement>(null);
 
+  // Focus find input when panel opens
   useEffect(() => {
     if (findReplaceOpen) {
       setTimeout(() => findInputRef.current?.focus(), 40);
     }
   }, [findReplaceOpen]);
 
-  const refreshStats = useCallback(() => {
-    const editor = currentEditor;
-    const model = editor?.getModel();
-    if (!editor || !model || !find) {
-      setStats({ count: 0, current: 0 });
-      setRegexError(null);
-      return;
-    }
+  const applyQuery = useCallback(
+    (opts?: { f?: string; r?: string; rx?: boolean; cs?: boolean; ww?: boolean }) => {
+      const view = currentEditorView;
+      if (!view) return false;
+      try {
+        const query = new SearchQuery({
+          search: opts?.f ?? find,
+          replace: opts?.r ?? replace,
+          regexp: opts?.rx ?? regex,
+          caseSensitive: opts?.cs ?? caseSensitive,
+          wholeWord: opts?.ww ?? wholeWord,
+        });
+        view.dispatch({ effects: setSearchQuery.of(query) });
+        return true;
+      } catch {
+        return false; // invalid regex – swallow silently
+      }
+    },
+    [find, replace, regex, caseSensitive, wholeWord],
+  );
 
-    try {
-      const matches = getAllMatches(model, find, regex, caseSensitive, wholeWord);
-      const selection = editor.getSelection();
-      const current = selection
-        ? matches.findIndex((m) => m.range.equalsRange(selection)) + 1
-        : 0;
-      setStats({ count: matches.length, current: current > 0 ? current : 0 });
-      setRegexError(null);
-    } catch {
-      setStats({ count: 0, current: 0 });
-      setRegexError("Invalid regex");
-    }
-  }, [find, regex, caseSensitive, wholeWord]);
+  // Push search query to editor whenever anything changes while panel is open
+  useEffect(() => {
+    if (findReplaceOpen) applyQuery();
+  }, [find, replace, regex, caseSensitive, wholeWord, findReplaceOpen, applyQuery]);
 
+  // Clear highlights when panel closes
   useEffect(() => {
     if (!findReplaceOpen) {
-      setStats({ count: 0, current: 0 });
-      setRegexError(null);
-      return;
+      const view = currentEditorView;
+      if (view) {
+        view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: "" })) });
+      }
     }
-    refreshStats();
-  }, [findReplaceOpen, refreshStats]);
+  }, [findReplaceOpen]);
 
-  useEffect(() => {
-    if (!findReplaceOpen) return;
-    refreshStats();
-  }, [find, regex, caseSensitive, wholeWord, findReplaceOpen, refreshStats]);
+  if (!findReplaceOpen) return null;
 
   const close = () => toggleFindReplace();
 
-  const findOne = (next: boolean) => {
-    const editor = currentEditor;
-    const model = editor?.getModel();
-    if (!editor || !model || !find) return;
+  const handleFindNext = () => {
+    const view = currentEditorView;
+    if (!view) return;
+    applyQuery();
+    findNext(view);
+    view.focus();
+  };
 
-    try {
-      const { pattern, isRegex } = buildSearchPattern(find, regex, wholeWord);
-      const pos = editor.getPosition() ?? { lineNumber: 1, column: 1 };
-      const primary = next
-        ? model.findNextMatch(pattern, pos, isRegex, caseSensitive, null, false)
-        : model.findPreviousMatch(pattern, pos, isRegex, caseSensitive, null, false);
-
-      const fallbackPos = next
-        ? { lineNumber: 1, column: 1 }
-        : { lineNumber: model.getLineCount(), column: model.getLineMaxColumn(model.getLineCount()) };
-      const match = primary ?? (next
-        ? model.findNextMatch(pattern, fallbackPos, isRegex, caseSensitive, null, false)
-        : model.findPreviousMatch(pattern, fallbackPos, isRegex, caseSensitive, null, false));
-
-      if (!match) return;
-      editor.setSelection(match.range);
-      editor.revealRangeInCenter(match.range);
-      editor.focus();
-      refreshStats();
-    } catch {
-      setRegexError("Invalid regex");
-    }
+  const handleFindPrev = () => {
+    const view = currentEditorView;
+    if (!view) return;
+    applyQuery();
+    findPrevious(view);
+    view.focus();
   };
 
   const handleReplaceNext = () => {
-    const editor = currentEditor;
-    const model = editor?.getModel();
-    if (!editor || !model || !find) return;
-
-    try {
-      const { pattern, isRegex } = buildSearchPattern(find, regex, wholeWord);
-      const selection = editor.getSelection();
-      let match: MonacoEditorNS.FindMatch | null = null;
-
-      if (selection) {
-        const selectedText = model.getValueInRange(selection);
-        const selectedMatches = model.findMatches(pattern, false, isRegex, caseSensitive, null, false);
-        const selectedMatch = selectedMatches.find((m) => m.range.equalsRange(selection));
-        if (selectedMatch && selectedText.length > 0) {
-          match = selectedMatch;
-        }
-      }
-
-      if (!match) {
-        const pos = editor.getPosition() ?? { lineNumber: 1, column: 1 };
-        match = model.findNextMatch(pattern, pos, isRegex, caseSensitive, null, false);
-      }
-
-      if (!match) return;
-
-      editor.executeEdits("find-replace", [{ range: match.range, text: replace }]);
-      editor.setPosition({ lineNumber: match.range.startLineNumber, column: match.range.startColumn + replace.length });
-      findOne(true);
-      refreshStats();
-    } catch {
-      setRegexError("Invalid regex");
-    }
+    const view = currentEditorView;
+    if (!view) return;
+    applyQuery();
+    cmReplaceNext(view);
+    view.focus();
   };
 
   const handleReplaceAll = () => {
-    const editor = currentEditor;
-    const model = editor?.getModel();
-    if (!editor || !model || !find) return;
-
-    try {
-      const matches = getAllMatches(model, find, regex, caseSensitive, wholeWord);
-      if (matches.length === 0) return;
-
-      const edits = [...matches]
-        .reverse()
-        .map((m) => ({ range: m.range, text: replace }));
-
-      editor.executeEdits("find-replace-all", edits);
-      editor.focus();
-      refreshStats();
-    } catch {
-      setRegexError("Invalid regex");
-    }
+    const view = currentEditorView;
+    if (!view) return;
+    applyQuery();
+    cmReplaceAll(view);
+    view.focus();
   };
 
   const onFindKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      e.shiftKey ? findOne(false) : findOne(true);
+      e.shiftKey ? handleFindPrev() : handleFindNext();
     }
     if (e.key === "Escape") {
       e.preventDefault();
@@ -257,13 +183,12 @@ export function FindReplace() {
     }
   };
 
-  if (!findReplaceOpen) return null;
-
   return (
     <div
       className="flex flex-col gap-1.5 px-3 py-2 border-b border-[var(--border-subtle)] select-none"
       style={{ background: "var(--bg-overlay)" }}
     >
+      {/* Row 1 — Find */}
       <div className="flex items-center gap-1.5">
         <div className="relative flex-1 max-w-xs min-w-0">
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none">
@@ -281,10 +206,11 @@ export function FindReplace() {
           />
         </div>
 
+        {/* Option toggles */}
         <button
           type="button"
           className={toggleBtn(caseSensitive)}
-          title="Match case"
+          title="Match case (Alt+C)"
           onClick={() => setCaseSensitive((v) => !v)}
         >
           Aa
@@ -292,7 +218,7 @@ export function FindReplace() {
         <button
           type="button"
           className={toggleBtn(regex)}
-          title="Use regular expression"
+          title="Use regular expression (Alt+R)"
           onClick={() => setRegex((v) => !v)}
         >
           .*
@@ -300,7 +226,7 @@ export function FindReplace() {
         <button
           type="button"
           className={toggleBtn(wholeWord)}
-          title="Match whole word"
+          title="Match whole word (Alt+W)"
           onClick={() => setWholeWord((v) => !v)}
         >
           W
@@ -312,7 +238,7 @@ export function FindReplace() {
           type="button"
           className={iconBtn}
           title="Previous match (Shift+Enter)"
-          onClick={() => findOne(false)}
+          onClick={handleFindPrev}
         >
           <IconChevronUp />
         </button>
@@ -320,14 +246,12 @@ export function FindReplace() {
           type="button"
           className={iconBtn}
           title="Next match (Enter)"
-          onClick={() => findOne(true)}
+          onClick={handleFindNext}
         >
           <IconChevronDown />
         </button>
 
-        <div className="min-w-[56px] text-right text-xs text-[var(--text-muted)] tabular-nums">
-          {regexError ? regexError : stats.count > 0 ? `${stats.current || 1}/${stats.count}` : "0/0"}
-        </div>
+        <div className="flex-1" />
 
         <button
           type="button"
@@ -339,6 +263,7 @@ export function FindReplace() {
         </button>
       </div>
 
+      {/* Row 2 — Replace */}
       <div className="flex items-center gap-1.5">
         <div className="relative flex-1 max-w-xs min-w-0">
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none">

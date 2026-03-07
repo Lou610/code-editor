@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useEditorStore } from "../store/editorStore";
 import { openFileByPath } from "../tauri/files";
-import { gotoLine } from "../editorRef";
+import { currentEditorView } from "../editorRef";
+import { EditorView } from "codemirror";
+import { EditorSelection } from "@codemirror/state";
 import type { TabState } from "../types/editor";
 
 interface SearchMatch {
@@ -116,7 +118,17 @@ export function ProjectSearch() {
 
     // Wait a tick for the editor to mount, then jump to line.
     setTimeout(() => {
-      gotoLine(match.line);
+      const view = currentEditorView;
+      if (!view) return;
+      const doc = view.state.doc;
+      if (match.line > doc.lines) return;
+      const lineObj = doc.line(match.line);
+      view.dispatch({
+        selection: EditorSelection.cursor(lineObj.from),
+        scrollIntoView: true,
+        effects: EditorView.scrollIntoView(lineObj.from, { y: "center" }),
+      });
+      view.focus();
     }, 80);
   };
 

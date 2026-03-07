@@ -19,7 +19,6 @@ import {
 } from "./components";
 import { tryCloseTab } from "./components/TabBar";
 import { useEditorStore } from "./store/editorStore";
-import { useLspStore } from "./store/lspStore";
 import { useSettingsStore } from "./store/settingsStore";
 import { saveFile } from "./tauri/files";
 import { checkForUpdates } from "./tauri/updater";
@@ -136,14 +135,6 @@ function useKeyboardShortcuts() {
       if (e.ctrlKey && e.key === "k" && !e.shiftKey) {
         e.preventDefault();
         useEditorStore.getState().toggleShortcuts();
-      }
-      if (e.ctrlKey && e.altKey && (e.key === "l" || e.key === "L")) {
-        e.preventDefault();
-        useLspStore.getState().toggleMenu();
-      }
-      if (e.ctrlKey && e.altKey && (e.key === "r" || e.key === "R")) {
-        e.preventDefault();
-        useLspStore.getState().requestRestart();
       }
     };
     window.addEventListener("keydown", onKeyDown);

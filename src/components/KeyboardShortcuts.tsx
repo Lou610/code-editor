@@ -49,8 +49,6 @@ const SHORTCUTS: { category: string; items: { keys: string[]; action: string }[]
       { keys: ["Ctrl", "B"], action: "Toggle sidebar" },
       { keys: ["Ctrl", ","], action: "Open Settings" },
       { keys: ["Ctrl", "K"], action: "Open Keyboard Shortcuts" },
-      { keys: ["Ctrl", "Alt", "L"], action: "Toggle LSP panel" },
-      { keys: ["Ctrl", "Alt", "R"], action: "Restart LSP" },
     ],
   },
   {

@@ -3,14 +3,8 @@ import { useEditorStore } from "../store/editorStore";
 import { openFile, saveFile, saveFileAs, openFileByPath } from "../tauri/files";
 import { tryCloseApp } from "../tauri/window";
 
-import {
-  runCopy,
-  runCut,
-  runPaste,
-  runRedo,
-  runSelectAll,
-  runUndo,
-} from "../editorRef";
+import { currentEditorView } from "../editorRef";
+import { undo, redo, selectAll } from "@codemirror/commands";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { message } from "@tauri-apps/plugin-dialog";
 
@@ -68,6 +62,40 @@ const menuBtn =
 const menuBtnBase = `${menuBtn} text-[var(--text-primary)] hover:bg-[var(--bg-hover)]`;
 const menuBtnDisabled = `${menuBtn} text-[var(--text-muted)] cursor-default`;
 const separator = "h-px my-1 bg-[var(--border-subtle)]";
+
+function runUndo() {
+  const view = currentEditorView;
+  if (view) undo({ state: view.state, dispatch: (tr) => view.dispatch(tr) });
+}
+function runRedo() {
+  const view = currentEditorView;
+  if (view) redo({ state: view.state, dispatch: (tr) => view.dispatch(tr) });
+}
+function runSelectAll() {
+  const view = currentEditorView;
+  if (view) selectAll({ state: view.state, dispatch: (tr) => view.dispatch(tr) });
+}
+function runCopy() {
+  const view = currentEditorView;
+  if (view) {
+    view.contentDOM.focus();
+    document.execCommand("copy");
+  }
+}
+function runCut() {
+  const view = currentEditorView;
+  if (view) {
+    view.contentDOM.focus();
+    document.execCommand("cut");
+  }
+}
+function runPaste() {
+  const view = currentEditorView;
+  if (view) {
+    view.contentDOM.focus();
+    document.execCommand("paste");
+  }
+}
 
 export function MenuBar() {
   const {

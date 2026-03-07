@@ -193,19 +193,3 @@ input[type="checkbox"] {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
-
-/* Monaco line decoration gutter for git diff markers */
-.gn-diff-added {
-  border-left: 3px solid #3fb950;
-  margin-left: 2px;
-}
-
-.gn-diff-modified {
-  border-left: 3px solid #d29922;
-  margin-left: 2px;
-}
-
-.gn-diff-deleted {
-  border-left: 3px solid #f85149;
-  margin-left: 2px;
-}

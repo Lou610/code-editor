@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { EditorView } from "codemirror";
+import { EditorSelection } from "@codemirror/state";
 import { useEditorStore } from "../store/editorStore";
-import { currentEditor, gotoLine } from "../editorRef";
+import { currentEditorView } from "../editorRef";
 import type { TabState } from "../types/editor";
 
 export function GotoLine() {
@@ -32,18 +34,25 @@ export function GotoLine() {
   }, [gotoLineOpen, toggleGotoLine]);
 
   const jump = () => {
-    const model = currentEditor?.getModel();
-    if (!model) return;
+    const view = currentEditorView;
+    if (!view) return;
     const num = parseInt(value, 10);
     if (isNaN(num) || num < 1) {
       setError("Enter a valid line number.");
       return;
     }
-    if (num > model.getLineCount()) {
-      setError(`File only has ${model.getLineCount()} lines.`);
+    const doc = view.state.doc;
+    if (num > doc.lines) {
+      setError(`File only has ${doc.lines} lines.`);
       return;
     }
-    gotoLine(num);
+    const line = doc.line(num);
+    view.dispatch({
+      selection: EditorSelection.cursor(line.from),
+      scrollIntoView: true,
+      effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+    });
+    view.focus();
     toggleGotoLine();
   };
 

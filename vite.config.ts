@@ -24,9 +24,6 @@ export default defineConfig(async () => ({
           if (id.includes("react") || id.includes("scheduler")) {
             return "react-vendor";
           }
-          if (id.includes("monaco-editor") || id.includes("@monaco-editor")) {
-            return "monaco-vendor";
-          }
           if (id.includes("@codemirror") || id.includes("codemirror")) {
             return "codemirror-vendor";
           }
