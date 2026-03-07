@@ -5,6 +5,9 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::process::{Child, ChildStdin};
 use tokio::sync::Mutex;
 
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
 pub struct TerminalSession {
     pub stdin: ChildStdin,
     pub child: Child,
@@ -67,6 +70,12 @@ pub async fn terminal_create(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+
+    #[cfg(windows)]
+    {
+        // Prevent a transient external console window when spawning shells.
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
 
     if let Some(dir) = cwd {
         cmd.current_dir(dir);
