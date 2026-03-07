@@ -88,7 +88,7 @@ function generateId() {
 export const useEditorStore = create<EditorState>((set, get) => ({
   tabs: [],
   activeTabId: null,
-  sidebarWidth: 260,
+  sidebarWidth: 200,
   sidebarCollapsed: false,
   terminalOpen: false,
   findReplaceOpen: false,

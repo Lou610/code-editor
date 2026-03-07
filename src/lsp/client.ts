@@ -184,7 +184,7 @@ export class LspClient {
 
       const initializeResult = await this.request("initialize", {
         processId: null,
-        clientInfo: { name: "GroveNotes", version: "1.0.0" },
+        clientInfo: { name: "GroveNotes", version: "1.0.1" },
         rootUri,
         capabilities: {
           textDocument: {
