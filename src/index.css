@@ -56,6 +56,81 @@
   color-scheme: light;
 }
 
+/* ── Ocean theme ────────────────────────────────────────────────── */
+[data-theme="ocean"] {
+  --bg-base: #0a1a2f;
+  --bg-raised: #11263f;
+  --bg-overlay: #17314f;
+  --bg-hover: #1d3b5f;
+  --bg-active: #244a72;
+  --border-subtle: #1e3a5a;
+  --border-default: #2b537f;
+  --border-muted: #3a6a97;
+  --text-primary: #e3f2ff;
+  --text-secondary: #9fc0de;
+  --text-muted: #7ea8cb;
+  --accent: #44c1ff;
+  --accent-hover: #77d3ff;
+  --accent-muted: rgba(68, 193, 255, 0.18);
+  --success: #2fcb89;
+  --warning: #e7bc52;
+  --unsaved-dot: #ffb24d;
+  --badge-bg: rgba(68, 193, 255, 0.22);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+
+/* ── Forest theme ───────────────────────────────────────────────── */
+[data-theme="forest"] {
+  --bg-base: #101b16;
+  --bg-raised: #17261f;
+  --bg-overlay: #1d3229;
+  --bg-hover: #234032;
+  --bg-active: #2b4d3d;
+  --border-subtle: #21382c;
+  --border-default: #2f5441;
+  --border-muted: #3f6f57;
+  --text-primary: #e8f3ec;
+  --text-secondary: #a7c3b3;
+  --text-muted: #85a892;
+  --accent: #53d196;
+  --accent-hover: #7ee0b3;
+  --accent-muted: rgba(83, 209, 150, 0.2);
+  --success: #7ddf6b;
+  --warning: #d8b24f;
+  --unsaved-dot: #e9a158;
+  --badge-bg: rgba(83, 209, 150, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.32);
+  color-scheme: dark;
+}
+
+/* ── Sunset theme ───────────────────────────────────────────────── */
+[data-theme="sunset"] {
+  --bg-base: #fff7ed;
+  --bg-raised: #ffedd8;
+  --bg-overlay: #ffe2c2;
+  --bg-hover: #ffd3a6;
+  --bg-active: #ffc58d;
+  --border-subtle: #f0c79d;
+  --border-default: #e4ae79;
+  --border-muted: #d18f5a;
+  --text-primary: #402519;
+  --text-secondary: #80523a;
+  --text-muted: #9f6a4a;
+  --accent: #c65d3a;
+  --accent-hover: #a74c2d;
+  --accent-muted: rgba(198, 93, 58, 0.14);
+  --success: #318a48;
+  --warning: #9a6700;
+  --unsaved-dot: #d86f32;
+  --badge-bg: rgba(198, 93, 58, 0.14);
+  --shadow-sm: 0 1px 2px rgba(89, 45, 19, 0.08);
+  --shadow-md: 0 8px 20px rgba(89, 45, 19, 0.12);
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -27,7 +27,7 @@ import { showMinimap as minimapExtension } from "@replit/codemirror-minimap";
 import { invoke } from "@tauri-apps/api/core";
 import type { LanguageId } from "../types/editor";
 import { useEditorStore } from "../store/editorStore";
-import { useSettingsStore } from "../store/settingsStore";
+import { isLightTheme, useSettingsStore } from "../store/settingsStore";
 import { setCurrentEditorView } from "../editorRef";
 
 // ── Git diff gutter ──────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export function EditorPane() {
       : `"Consolas", "Courier New", monospace`;
     const fontFeatures = fontLigatures ? "normal" : '"liga" 0, "calt" 0';
 
-    const isLight = theme === "light";
+    const isLight = isLightTheme(theme);
     const editorBg = isLight ? "#ffffff" : "var(--bg-base)";
     const gutterBg = isLight ? "#f6f8fa" : "var(--bg-raised)";
     const gutterFg = isLight ? "#6e7781" : "var(--text-muted)";

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
-export type AppTheme = "dark" | "light";
+export const APP_THEMES = ["dark", "light", "ocean", "forest", "sunset"] as const;
+export type AppTheme = (typeof APP_THEMES)[number];
 export type EditorFontFamily =
   | "JetBrains Mono"
   | "Fira Code"
@@ -39,10 +40,27 @@ const DEFAULTS: AppSettings = {
   showMinimap: false,
 };
 
+const LIGHT_THEMES: ReadonlySet<AppTheme> = new Set(["light", "sunset"]);
+
+function isTheme(value: unknown): value is AppTheme {
+  return typeof value === "string" && APP_THEMES.includes(value as AppTheme);
+}
+
+export function isLightTheme(theme: AppTheme): boolean {
+  return LIGHT_THEMES.has(theme);
+}
+
 function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<AppSettings>) };
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<AppSettings>;
+      const merged = { ...DEFAULTS, ...parsed };
+      return {
+        ...merged,
+        theme: isTheme(merged.theme) ? merged.theme : DEFAULTS.theme,
+      };
+    }
   } catch {}
   return DEFAULTS;
 }
