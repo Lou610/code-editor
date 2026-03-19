@@ -18,15 +18,13 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full transition-colors ${
-        checked ? "bg-[var(--accent)]" : "bg-[var(--bg-active)]"
+      className={`relative inline-flex h-6 w-10 flex-shrink-0 items-center rounded-full p-0.5 transition-colors ${
+        checked ? "bg-[var(--accent)]" : "bg-[var(--bg-hover)]"
       }`}
     >
       <span
-        className={`absolute top-0.5 inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
-        style={{ left: "2px", transform: checked ? "translateX(14px)" : "translateX(0px)" }}
+        className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
+        style={{ transform: checked ? "translateX(16px)" : "translateX(0px)" }}
       />
     </button>
   );
