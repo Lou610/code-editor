@@ -1339,7 +1339,7 @@ dependencies = [
 
 [[package]]
 name = "grovenotes"
-version = "1.0.3"
+version = "1.0.6"
 dependencies = [
  "anyhow",
  "serde",
