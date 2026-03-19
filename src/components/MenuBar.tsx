@@ -110,6 +110,7 @@ export function MenuBar() {
     toggleShortcuts,
     toggleGotoLine,
     toggleProjectSearch,
+    toggleWhatsNew,
     closeAllTabs,
   } = useEditorStore();
 
@@ -482,6 +483,20 @@ export function MenuBar() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Help */}
+        <div className="relative">
+          <button
+            type="button"
+            className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+            onClick={() => {
+              setOpenMenu(null);
+              toggleWhatsNew();
+            }}
+          >
+            What&apos;s New
+          </button>
         </div>
 
         {/* Help */}

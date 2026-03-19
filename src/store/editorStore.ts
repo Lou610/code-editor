@@ -79,6 +79,8 @@ interface EditorState {
   toggleShortcuts: () => void;
   toggleGotoLine: () => void;
   toggleProjectSearch: () => void;
+  whatsNewOpen: boolean;
+  toggleWhatsNew: () => void;
 }
 
 function generateId() {
@@ -207,4 +209,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   toggleShortcuts: () => set((s) => ({ shortcutsOpen: !s.shortcutsOpen })),
   toggleGotoLine: () => set((s) => ({ gotoLineOpen: !s.gotoLineOpen })),
   toggleProjectSearch: () => set((s) => ({ projectSearchOpen: !s.projectSearchOpen })),
+  whatsNewOpen: false,
+  toggleWhatsNew: () => set((s) => ({ whatsNewOpen: !s.whatsNewOpen })),
 }));

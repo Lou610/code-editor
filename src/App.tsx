@@ -16,6 +16,7 @@ import {
   ProjectSearch,
   Breadcrumb,
   FileReloadToast,
+  WhatsNewModal,
 } from "./components";
 import { tryCloseTab } from "./components/TabBar";
 import { useEditorStore } from "./store/editorStore";
@@ -189,6 +190,7 @@ export default function App() {
       <KeyboardShortcuts />
       <GotoLine />
       <ProjectSearch />
+      <WhatsNewModal />
       <FileReloadToast />
     </div>
   );
