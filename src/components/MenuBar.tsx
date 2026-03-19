@@ -518,7 +518,7 @@ export function MenuBar() {
                 className={menuBtnBase}
                 onClick={async () => {
                   setOpenMenu(null);
-                  await message("GroveNotes\n\nA lightweight code editor built with Tauri and React.\n\nVersion 1.0.6", {
+                  await message("GroveNotes\n\nA lightweight code editor built with Tauri and React.\n\nVersion 1.0.7", {
                     title: "About",
                     kind: "info",
                   });
