@@ -40,7 +40,7 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-6 py-3 border-b border-[var(--border-subtle)] last:border-0">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 py-3 border-b border-[var(--border-subtle)] last:border-0">
       <div className="min-w-0">
         <p className="text-sm font-medium text-[var(--text-primary)]">{label}</p>
         {description && (
@@ -92,18 +92,18 @@ export function SettingsModal() {
 
       {/* Panel */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
       >
         <div
-          className="w-full max-w-md rounded-xl border border-[var(--border-default)] shadow-2xl flex flex-col max-h-[90vh]"
+          className="w-full max-w-md rounded-xl border border-[var(--border-default)] shadow-2xl flex flex-col min-h-0 max-h-[min(90dvh,calc(100vh-2rem))] overflow-hidden"
           style={{ background: "var(--bg-raised)" }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)]">
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)]">
             <div className="flex items-center gap-2.5">
               <span className="text-[var(--accent)]">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,7 +126,7 @@ export function SettingsModal() {
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain px-5 py-4">
             <Section title="Appearance">
               <Row label="Theme" description="Color theme for the interface">
                 <div className="flex flex-wrap gap-2 max-w-[280px] justify-end">
@@ -274,7 +274,7 @@ export function SettingsModal() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-subtle)]">
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-t border-[var(--border-subtle)]">
             <button
               type="button"
               className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
