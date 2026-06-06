@@ -1,6 +1,6 @@
 [package]
 name = "grovenotes"
-version = "1.0.14"
+version = "1.0.15"
 description = "GroveNotes - A lightweight code editor built with Tauri and React"
 authors = ["DestroFlare"]
 edition = "2021"

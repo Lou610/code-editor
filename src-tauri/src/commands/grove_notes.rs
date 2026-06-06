@@ -27,13 +27,14 @@ pub async fn grove_notes_request(
     };
     let url = format!("{GROVE_NOTES_BASE_URL}{normalized_path}");
 
-    let method = match method.as_deref().unwrap_or("GET").to_uppercase().as_str() {
-        "GET" => Method::GET,
-        "PUT" => Method::PUT,
-        "POST" => Method::POST,
-        "DELETE" => Method::DELETE,
-        other => return Err(format!("Unsupported HTTP method: {other}")),
-    };
+    let (method, include_json_content_type) =
+        match method.as_deref().unwrap_or("GET").to_uppercase().as_str() {
+            "GET" => (Method::GET, false),
+            "PUT" => (Method::PUT, true),
+            "POST" => (Method::POST, true),
+            "DELETE" => (Method::DELETE, false),
+            other => return Err(format!("Unsupported HTTP method: {other}")),
+        };
 
     let client = reqwest::Client::builder()
         .user_agent("GroveNotes-Desktop")
@@ -45,7 +46,7 @@ pub async fn grove_notes_request(
         .header("Authorization", format!("Bearer {}", api_key.trim()))
         .header("Accept", "application/json");
 
-    if method != Method::GET {
+    if include_json_content_type {
         request = request.header("Content-Type", "application/json");
     }
 
