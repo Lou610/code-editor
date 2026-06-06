@@ -1339,9 +1339,10 @@ dependencies = [
 
 [[package]]
 name = "grovenotes"
-version = "1.0.7"
+version = "1.0.13"
 dependencies = [
  "anyhow",
+ "reqwest",
  "serde",
  "serde_json",
  "tauri",

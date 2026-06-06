@@ -1,9 +1,9 @@
 mod commands;
 
 use commands::{
-    create_dir, create_file, delete_entry, get_file_mtime, git_branch, git_file_diff, path_exists,
-    read_dir, read_file, rename_entry, search_in_files, terminal_create, terminal_kill,
-    terminal_write, write_file, TerminalState,
+    create_dir, create_file, delete_entry, get_file_mtime, git_branch, git_file_diff,
+    grove_notes_request, path_exists, read_dir, read_file, rename_entry, search_in_files,
+    terminal_create, terminal_kill, terminal_write, write_file, TerminalState,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -31,6 +31,7 @@ pub fn run() {
             terminal_create,
             terminal_write,
             terminal_kill,
+            grove_notes_request,
         ])
         .run(tauri::generate_context!());
 
