@@ -56,5 +56,5 @@ jobs:
             Includes signed Tauri bundles and updater signatures when signing secrets are configured.
           releaseDraft: false
           prerelease: false
-          uploadUpdaterJson: true
-          uploadUpdaterSignatures: true
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
