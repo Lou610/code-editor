@@ -17,11 +17,12 @@ import {
   Breadcrumb,
   FileReloadToast,
   WhatsNewModal,
+  GroveNotesBrowser,
 } from "./components";
 import { tryCloseTab } from "./components/TabBar";
-import { useEditorStore } from "./store/editorStore";
+import { useEditorStore, loadPersistedTabs, loadPersistedActiveTabPath } from "./store/editorStore";
 import { useSettingsStore } from "./store/settingsStore";
-import { saveFile } from "./tauri/files";
+import { saveFile, openFileByPath } from "./tauri/files";
 import { checkForUpdates } from "./tauri/updater";
 import "./App.css";
 
@@ -54,6 +55,42 @@ function useAutoUpdateCheck() {
   useEffect(() => {
     // Silent startup check; interactive checks can be wired to a menu action later.
     checkForUpdates({ interactive: false }).catch(() => {});
+  }, []);
+}
+
+/** Restore tabs from localStorage on startup by re-reading each file from disk. */
+function useRestoreTabs() {
+  useEffect(() => {
+    const saved = loadPersistedTabs();
+    if (saved.length === 0) return;
+    const activePath = loadPersistedActiveTabPath();
+
+    let firstActiveId: string | null = null;
+
+    (async () => {
+      for (const saved_tab of saved) {
+        const result = await openFileByPath(saved_tab.path).catch(() => null);
+        if (!result) continue;
+        const id = useEditorStore.getState().addTabOrFocus({
+          path: result.path,
+          label: result.label,
+          content: result.content,
+          dirty: false,
+          language: saved_tab.language,
+          encoding: saved_tab.encoding,
+          lineEnding: saved_tab.lineEnding,
+        });
+        if (saved_tab.path === activePath && firstActiveId === null) {
+          firstActiveId = id;
+        }
+      }
+      // Activate the tab that was active when the app was closed
+      if (firstActiveId) {
+        useEditorStore.getState().setActiveTab(firstActiveId);
+      }
+    })();
+  // Only run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
 
@@ -167,6 +204,7 @@ export default function App() {
   useTheme();
   useGitBranch();
   useAutoUpdateCheck();
+  useRestoreTabs();
   useKeyboardShortcuts();
   useCloseGuard();
 
@@ -192,6 +230,7 @@ export default function App() {
       <ProjectSearch />
       <WhatsNewModal />
       <FileReloadToast />
+      <GroveNotesBrowser />
     </div>
   );
 }

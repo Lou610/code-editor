@@ -12,3 +12,4 @@ export { ProjectSearch } from "./ProjectSearch";
 export { Breadcrumb } from "./Breadcrumb";
 export { FileReloadToast } from "./FileReloadToast";
 export { WhatsNewModal } from "./WhatsNewModal";
+export { GroveNotesBrowser } from "./GroveNotesBrowser";

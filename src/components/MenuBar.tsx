@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useEditorStore } from "../store/editorStore";
+import { useGroveNotesStore } from "../store/groveNotesStore";
+import { pushGroveNote } from "../tauri/groveNotes";
 import { openFile, saveFile, saveFileAs, openFileByPath } from "../tauri/files";
 import { tryCloseApp } from "../tauri/window";
 
@@ -112,7 +114,13 @@ export function MenuBar() {
     toggleProjectSearch,
     toggleWhatsNew,
     closeAllTabs,
+    toggleGnBrowser,
+    activeTabId,
+    tabs,
   } = useEditorStore();
+
+  const { getNoteId } = useGroveNotesStore();
+  const activeNoteId = activeTabId ? getNoteId(activeTabId) : null;
 
   const [openMenu, setOpenMenu] = useState<MenuId>(null);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -194,6 +202,24 @@ export function MenuBar() {
     saveFileAs();
   };
 
+  const handleOpenFromGn = () => {
+    setOpenMenu(null);
+    toggleGnBrowser();
+  };
+
+  const handleSyncToGn = async () => {
+    setOpenMenu(null);
+    if (!activeNoteId || !activeTabId) return;
+    const tab = tabs.find((t) => t.id === activeTabId);
+    if (!tab) return;
+    try {
+      await pushGroveNote(activeNoteId, tab.content);
+      await message("Note synced to GroveNotes successfully.", { title: "GroveNotes", kind: "info" });
+    } catch (e) {
+      await message(e instanceof Error ? e.message : "Sync failed", { title: "GroveNotes", kind: "error" });
+    }
+  };
+
   const handleRecent = async (path: string) => {
     setOpenMenu(null);
     const result = await openFileByPath(path);
@@ -256,6 +282,18 @@ export function MenuBar() {
               </button>
               <button type="button" className={menuBtnBase} onClick={handleSaveAs}>
                 Save As…
+              </button>
+              <div className={separator} />
+              <button type="button" className={menuBtnBase} onClick={handleOpenFromGn}>
+                Open from GroveNotes…
+              </button>
+              <button
+                type="button"
+                className={activeNoteId ? menuBtnBase : menuBtnDisabled}
+                onClick={activeNoteId ? handleSyncToGn : undefined}
+                title={activeNoteId ? "Sync current note back to GroveNotes" : "No GroveNotes note is active"}
+              >
+                Sync to GroveNotes
               </button>
               <div className={separator} />
               <button

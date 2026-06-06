@@ -76,6 +76,7 @@ export function SettingsModal() {
     fontSize, tabSize, wordWrap, fontLigatures,
     autoSave, autoSaveDelay,
     theme, fontFamily, terminalShell, showMinimap,
+    groveNotesUrl, groveNotesApiKey,
     update, reset,
   } = useSettingsStore();
 
@@ -249,6 +250,36 @@ export function SettingsModal() {
                   </select>
                 </Row>
               )}
+            </Section>
+
+            <Section title="GroveNotes Integration">
+              <Row
+                label="GroveNotes URL"
+                description="Base URL of your GroveNotes instance (e.g. https://notes.example.com)"
+              >
+                <input
+                  type="url"
+                  value={groveNotesUrl}
+                  onChange={(e) => update({ groveNotesUrl: e.target.value })}
+                  placeholder="https://..."
+                  className="h-7 px-2 rounded-md text-sm bg-[var(--bg-base)] border border-[var(--border-default)] text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none transition-colors w-52"
+                />
+              </Row>
+              <Row
+                label="API Key"
+                description="Your GroveNotes REST API key (found in Settings → API)"
+              >
+                <input
+                  type="password"
+                  value={groveNotesApiKey}
+                  onChange={(e) => update({ groveNotesApiKey: e.target.value })}
+                  placeholder="gn_..."
+                  className="h-7 px-2 rounded-md text-sm bg-[var(--bg-base)] border border-[var(--border-default)] text-[var(--text-primary)] focus:border-[var(--accent)] focus:outline-none transition-colors w-52 font-mono"
+                />
+              </Row>
+              <div className="py-2 text-xs text-[var(--text-muted)] leading-relaxed">
+                Once configured, use <strong style={{ color: "var(--text-secondary)" }}>File → Open from GroveNotes</strong> to browse and open notes, and <strong style={{ color: "var(--text-secondary)" }}>File → Sync to GroveNotes</strong> to push edits back.
+              </div>
             </Section>
           </div>
 

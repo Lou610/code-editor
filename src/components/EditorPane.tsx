@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { marked } from "marked";
 import { EditorView, basicSetup } from "codemirror";
 import { gutter, GutterMarker } from "@codemirror/view";
 import { saveFile } from "../tauri/files";
@@ -122,6 +123,18 @@ export function EditorPane() {
     useSettingsStore();
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeTab = tabs.find((t) => t.id === activeTabId);
+  const isMarkdown = activeTab?.language === "markdown";
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Reset preview when switching away from markdown
+  useEffect(() => {
+    if (!isMarkdown) setShowPreview(false);
+  }, [isMarkdown]);
+
+  const renderedMarkdown = useMemo(() => {
+    if (!showPreview || !activeTab) return "";
+    return marked(activeTab.content, { async: false }) as string;
+  }, [showPreview, activeTab?.content]);
 
   // Recreate the editor when the active tab or any display setting changes.
   useEffect(() => {
@@ -140,7 +153,7 @@ export function EditorPane() {
     const gutterBg = isLight ? "#f6f8fa" : "var(--bg-raised)";
     const gutterFg = isLight ? "#6e7781" : "var(--text-muted)";
     const activeLineBg = isLight ? "#f0f4f8" : "var(--bg-overlay)";
-    const selectionBg = isLight ? "rgba(9,105,218,0.15)" : "rgba(56,139,253,0.25)";
+    const selectionBg = isLight ? "rgba(9,105,218,0.30)" : "rgba(56,139,253,0.50)";
     const cursorColor = isLight ? "#0969da" : "var(--accent)";
 
     const extensions = [
@@ -288,8 +301,71 @@ export function EditorPane() {
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden">
-      <div ref={containerRef} className="h-full w-full cm-editor-host" />
+    <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+      {/* Markdown toolbar */}
+      {isMarkdown && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            padding: "4px 8px",
+            borderBottom: "1px solid var(--border-subtle)",
+            background: "var(--bg-raised)",
+            gap: "6px",
+            fontSize: "12px",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <span>Markdown</span>
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            style={{
+              padding: "2px 10px",
+              borderRadius: "4px",
+              border: "1px solid var(--border-subtle)",
+              background: showPreview ? "var(--accent)" : "var(--bg-overlay)",
+              color: showPreview ? "#fff" : "var(--text-primary)",
+              cursor: "pointer",
+              fontSize: "12px",
+            }}
+          >
+            {showPreview ? "Hide Preview" : "Show Preview"}
+          </button>
+        </div>
+      )}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Editor — hidden when preview-only, otherwise always visible */}
+        <div
+          ref={containerRef}
+          className="cm-editor-host"
+          style={{
+            flex: showPreview ? "0 0 50%" : "1 1 100%",
+            height: "100%",
+            overflow: "hidden",
+            display: showPreview ? undefined : "block",
+          }}
+        />
+        {/* Markdown preview pane */}
+        {showPreview && (
+          <div
+            style={{
+              flex: "0 0 50%",
+              borderLeft: "1px solid var(--border-subtle)",
+              overflowY: "auto",
+              padding: "16px 24px",
+              background: "var(--bg-base)",
+              color: "var(--text-primary)",
+              fontFamily: "system-ui, sans-serif",
+              fontSize: "14px",
+              lineHeight: "1.7",
+            }}
+            className="markdown-preview"
+            dangerouslySetInnerHTML={{ __html: renderedMarkdown }}
+          />
+        )}
+      </div>
     </div>
   );
 }

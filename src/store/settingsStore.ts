@@ -23,6 +23,9 @@ export interface AppSettings {
   fontFamily: EditorFontFamily;
   terminalShell: TerminalShell;
   showMinimap: boolean;
+  // GroveNotes integration
+  groveNotesUrl: string;
+  groveNotesApiKey: string;
 }
 
 const SETTINGS_KEY = "grovenotes:settings";
@@ -38,6 +41,8 @@ const DEFAULTS: AppSettings = {
   fontFamily: "JetBrains Mono",
   terminalShell: "powershell.exe",
   showMinimap: false,
+  groveNotesUrl: "",
+  groveNotesApiKey: "",
 };
 
 const LIGHT_THEMES: ReadonlySet<AppTheme> = new Set(["light", "sunset"]);

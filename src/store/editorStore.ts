@@ -4,6 +4,8 @@ import type { TabState, LanguageId } from "../types/editor";
 // ── localStorage helpers ──────────────────────────────────────────────────────
 const RECENT_KEY = "grovenotes:recentFiles";
 const WORKSPACE_KEY = "grovenotes:workspaceRoot";
+const TABS_KEY = "grovenotes:openTabs";
+const ACTIVE_TAB_KEY = "grovenotes:activeTabId";
 
 function loadRecentFiles(): string[] {
   try {
@@ -26,6 +28,49 @@ function persistWorkspaceRoot(path: string | null) {
   try {
     if (path) localStorage.setItem(WORKSPACE_KEY, path);
     else localStorage.removeItem(WORKSPACE_KEY);
+  } catch {}
+}
+
+/** Saved tab shape — paths only, content is re-read from disk on restore */
+export interface PersistedTab {
+  path: string;
+  label: string;
+  language: import("../types/editor").LanguageId;
+  encoding: string;
+  lineEnding: import("../types/editor").LineEnding;
+}
+
+export function loadPersistedTabs(): PersistedTab[] {
+  try {
+    const raw = localStorage.getItem(TABS_KEY);
+    if (raw) return JSON.parse(raw) as PersistedTab[];
+  } catch {}
+  return [];
+}
+
+export function loadPersistedActiveTabPath(): string | null {
+  try { return localStorage.getItem(ACTIVE_TAB_KEY); } catch { return null; }
+}
+
+function persistTabs(tabs: import("../types/editor").TabState[], activeTabId: string | null) {
+  try {
+    // Only persist tabs that have a real file path (skip untitled buffers)
+    const toSave: PersistedTab[] = tabs
+      .filter((t) => t.path != null)
+      .map((t) => ({
+        path: t.path as string,
+        label: t.label,
+        language: t.language,
+        encoding: t.encoding,
+        lineEnding: t.lineEnding,
+      }));
+    localStorage.setItem(TABS_KEY, JSON.stringify(toSave));
+    const active = tabs.find((t) => t.id === activeTabId);
+    if (active?.path) {
+      localStorage.setItem(ACTIVE_TAB_KEY, active.path);
+    } else {
+      localStorage.removeItem(ACTIVE_TAB_KEY);
+    }
   } catch {}
 }
 
@@ -81,6 +126,8 @@ interface EditorState {
   toggleProjectSearch: () => void;
   whatsNewOpen: boolean;
   toggleWhatsNew: () => void;
+  gnBrowserOpen: boolean;
+  toggleGnBrowser: () => void;
 }
 
 function generateId() {
@@ -109,10 +156,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   addTab: (tab) => {
     const id = generateId();
     const newTab: TabState = { ...tab, id };
-    set((s) => ({
-      tabs: [...s.tabs, newTab],
-      activeTabId: id,
-    }));
+    set((s) => {
+      const tabs = [...s.tabs, newTab];
+      persistTabs(tabs, id);
+      return { tabs, activeTabId: id };
+    });
     return id;
   },
 
@@ -124,7 +172,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         (t: TabState) => t.path != null && t.path.replace(/\\/g, "/") === norm,
       );
       if (existing) {
-        set({ activeTabId: existing.id });
+        set((s) => { persistTabs(s.tabs, existing.id); return { activeTabId: existing.id }; });
         return existing.id;
       }
     }
@@ -140,10 +188,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         s.activeTabId === id
           ? next[idx]?.id ?? next[idx - 1]?.id ?? null
           : s.activeTabId;
+      persistTabs(next, nextActive);
       return { tabs: next, activeTabId: nextActive };
     }),
 
-  setActiveTab: (id) => set({ activeTabId: id }),
+  setActiveTab: (id) => {
+    set((s) => { persistTabs(s.tabs, id); return { activeTabId: id }; });
+  },
 
   updateTabContent: (id, content, dirty = true) =>
     set((s) => ({
@@ -175,7 +226,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       return { tabs };
     }),
 
-  closeAllTabs: () => set({ tabs: [], activeTabId: null }),
+  closeAllTabs: () => {
+    persistTabs([], null);
+    set({ tabs: [], activeTabId: null });
+  },
 
   setSidebarWidth: (sidebarWidth) => set({ sidebarWidth }),
   setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
@@ -211,4 +265,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   toggleProjectSearch: () => set((s) => ({ projectSearchOpen: !s.projectSearchOpen })),
   whatsNewOpen: false,
   toggleWhatsNew: () => set((s) => ({ whatsNewOpen: !s.whatsNewOpen })),
+  gnBrowserOpen: false,
+  toggleGnBrowser: () => set((s) => ({ gnBrowserOpen: !s.gnBrowserOpen })),
 }));
