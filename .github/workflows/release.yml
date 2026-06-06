@@ -17,19 +17,8 @@ permissions:
 
 jobs:
   tauri-release:
-    name: Tauri Release (${{ matrix.platform.name }})
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: Windows
-            os: windows-latest
-          - name: macOS
-            os: macos-latest
-          - name: Linux
-            os: ubuntu-22.04
-
-    runs-on: ${{ matrix.platform.os }}
+    name: Tauri Release (Windows)
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -43,16 +32,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Linux system dependencies
-        if: matrix.platform.os == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            patchelf
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -72,7 +51,7 @@ jobs:
           tagName: ${{ github.event.inputs.tag || github.ref_name }}
           releaseName: GroveNotes ${{ github.event.inputs.tag || github.ref_name }}
           releaseBody: |
-            Automated release for GroveNotes.
+            Automated release for GroveNotes (Windows).
 
             Includes signed Tauri bundles and updater signatures when signing secrets are configured.
           releaseDraft: false

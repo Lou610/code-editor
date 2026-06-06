@@ -76,7 +76,7 @@ function formatDate(iso: string) {
 
 export function GroveNotesBrowser() {
   const { gnBrowserOpen, toggleGnBrowser, addTab, setActiveTab, tabs, activeTabId } = useEditorStore();
-  const { groveNotesUrl, groveNotesApiKey } = useSettingsStore();
+  const { groveNotesApiKey } = useSettingsStore();
   const { register, getNoteId, getTabId, unregisterTab } = useGroveNotesStore();
 
   const [notes, setNotes] = useState<GroveNote[]>([]);
@@ -86,7 +86,7 @@ export function GroveNotesBrowser() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  const configured = !!(groveNotesUrl && groveNotesApiKey);
+  const configured = !!groveNotesApiKey;
 
   const activeNoteId = activeTabId ? getNoteId(activeTabId) : null;
 
@@ -275,7 +275,16 @@ export function GroveNotesBrowser() {
                 <span className="text-[var(--text-muted)] text-3xl">🌿</span>
                 <p className="text-sm text-[var(--text-primary)] font-medium">GroveNotes not configured</p>
                 <p className="text-xs text-[var(--text-muted)]">
-                  Set your GroveNotes URL and API key in{" "}
+                  Add your API key from{" "}
+                  <a
+                    href="https://grovenotes.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline text-[var(--accent)]"
+                  >
+                    grovenotes.com
+                  </a>{" "}
+                  in{" "}
                   <button
                     type="button"
                     className="underline text-[var(--accent)]"

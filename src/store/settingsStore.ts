@@ -24,7 +24,6 @@ export interface AppSettings {
   terminalShell: TerminalShell;
   showMinimap: boolean;
   // GroveNotes integration
-  groveNotesUrl: string;
   groveNotesApiKey: string;
 }
 
@@ -41,7 +40,6 @@ const DEFAULTS: AppSettings = {
   fontFamily: "JetBrains Mono",
   terminalShell: "powershell.exe",
   showMinimap: false,
-  groveNotesUrl: "",
   groveNotesApiKey: "",
 };
 
