@@ -79,6 +79,10 @@ export function Sidebar() {
     setChildrenCache((c) => ({ ...c, [parentPath]: list }));
   }, [loadDir, refreshRoot, workspaceRoot]);
 
+  // On mount: if a workspace root was persisted, load its entries immediately.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (workspaceRoot) refreshRoot(); }, []);
+
   useEffect(() => {
     if (workspaceRoot && explorerRefreshTrigger > 0) {
       refreshRoot();
